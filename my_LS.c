@@ -46,12 +46,12 @@ int main(int argc, char *argv[])
 	int  	count1;
 	
 	//先把参数，路径存数组中，再分有参无参讨论
-	for( count1 = 1; count1 < argc; count1++)
+	for ( count1 = 1; count1 < argc; count1++)
 	      if(argv[count1][0] == '-')
 		    strncpy(para,argv[count1],2);
 
 	//因为最多出现两个参数，所以有参无参以2为界
-	if(argc < 2)
+	if (argc < 2)
 	      display_present(path);
 	else	       
 	{ 
@@ -79,9 +79,9 @@ void show(char filename[][256])
 	maxlen = strlen(filename[i]);
 	
 	//找到最长文件名
-	while( strncmp(filename[i],"\0",2) != 0)
+	while ( strncmp(filename[i],"\0",2) != 0)
 	{	
-		if(maxlen < strlen(filename[i+1]))
+		if (maxlen < strlen(filename[i+1]))
 		      maxlen = strlen(filename[i+1]);
 		i++;
 	}
@@ -89,14 +89,14 @@ void show(char filename[][256])
 	//对其输出，利用最大文件名对齐，补空格
 	i = 0;
 	linemax = maxlen;
-	while( strncmp(filename[i],"\0",2) != 0)
+	while (strncmp(filename[i],"\0",2) != 0)
 	{
 		nowlen = strlen(filename[i]);
-		if((linemax + 2 ) > 120)
+		if ((linemax + 2 ) > 120)
 		{
 			printf("\n");
 			printf("%s",filename[i]);
-			for( j = 0; j < maxlen - nowlen + 2; j++)
+			for ( j = 0; j < maxlen - nowlen + 2; j++)
 			      printf(" ");
 			linemax = maxlen;
 			i++;
@@ -104,7 +104,7 @@ void show(char filename[][256])
 		else
 		{      
 			printf("%s",filename[i]);
-			for( j = 0; j < maxlen - nowlen + 2; j++)
+			for ( j = 0; j < maxlen - nowlen + 2; j++)
 			    printf(" ");
 			linemax += (maxlen + 2);
 			i++;
@@ -122,22 +122,22 @@ int display_present(char *path)
 	char 		temp[256];
 
 	dir = opendir(path);
-	if(dir == NULL)
+	if (dir == NULL)
 		my_error("opendir",__LINE__);
 	
 	//复制目录文件名到二位字符数组中
-	for( count1 = 0; (perfile = readdir(dir)) != NULL; count1++)
-		if(strncmp(perfile->d_name,".",1) != 0 && strncmp(perfile->d_name,"..",2) != 0)
+	for ( count1 = 0; (perfile = readdir(dir)) != NULL; count1++)
+		if (strncmp(perfile->d_name,".",1) != 0 && strncmp(perfile->d_name,"..",2) != 0)
 		{
 			strcpy(filename[count1],perfile->d_name);
 		}
 		else
 		      count1--;
 	//排序
-	for( i = 0; i < count1 + 1; i++)
-	      for( j = 0; j < count1 - 1 - i; j++)
+	for ( i = 0; i < count1 + 1; i++)
+	      for ( j = 0; j < count1 - 1 - i; j++)
 		{
-			if((strcmp(filename[j],filename[j+1])) > 0 )
+			if ((strcmp(filename[j],filename[j+1])) > 0 )
 			{
 				strcpy(temp,filename[j]);
 				strcpy(filename[j],filename[j+1]);
@@ -160,18 +160,18 @@ int display_all(char *path)
 	char 		temp[256];
 
 	dir = opendir(path);
-	if(dir == NULL)
+	if (dir == NULL)
 		my_error("opendir",__LINE__);
 	
 	//复制目录文件名到二位字符数组中
-	for( count1 = 0; (perfile = readdir(dir)) != NULL; count1++)
+	for ( count1 = 0; (perfile = readdir(dir)) != NULL; count1++)
 		strcpy(filename[count1],perfile->d_name);
 	
 	//排序
-	for( i = 0; i < count1 + 1; i++)
-	      for( j = 0; j < count1 - 1 - i; j++)
+	for ( i = 0; i < count1 + 1; i++)
+	      for ( j = 0; j < count1 - 1 - i; j++)
 		{
-			if((strcmp(filename[j],filename[j+1])) > 0 )
+			if ((strcmp(filename[j],filename[j+1])) > 0 )
 			{
 				strcpy(temp,filename[j]);
 				strcpy(filename[j],filename[j+1]);
@@ -188,11 +188,11 @@ int display_all(char *path)
 int display_para(char *para,char *path)
 {
 	
-	if(strncmp(para,"-t",2) == 0)
+	if (strncmp(para,"-t",2) == 0)
 	      display_next(path);
-	else if(strncmp(para,"-a",2) == 0)
+	else if (strncmp(para,"-a",2) == 0)
 	      display_all(path);
-	else if(strncmp(para,"-l",2) == 0)
+	else if (strncmp(para,"-l",2) == 0)
 	      display_property(path);
 
 	return 0;
@@ -204,19 +204,21 @@ void display_next(char *path)
 	struct dirent 	*into;
 	struct stat 	buf;
 
-	if((dir = opendir(path)) == NULL)
+	if ((dir = opendir(path)) == NULL)
 	      my_error("opendir error",__LINE__);
 
 	chdir(path);
-	while((into = readdir(dir)) != NULL)
+	while ((into = readdir(dir)) != NULL)
 	{ 
-		if(lstat(into->d_name,&buf) == -1)		
+		if (lstat(into->d_name,&buf) == -1)		
 		      my_error("lstat",__LINE__);
 
-		if(S_ISDIR(buf.st_mode))
+		if (S_ISDIR(buf.st_mode))
 		{
-			if(strcmp(".",into->d_name) == 0 || strcmp("..",into->d_name) == 0)
-			{continue;}
+			if (strcmp(".",into->d_name) == 0 || strcmp("..",into->d_name) == 0)
+			{
+				continue;
+			}
 			display_next(into->d_name);
 		}
 		else
@@ -232,7 +234,7 @@ void show_t(char *filename)
 {
 	char 	path_max[256];
 
-	if(getcwd(path_max,256) == NULL)
+	if (getcwd(path_max,256) == NULL)
 		my_error("getcwd",__LINE__);
 
 	printf("%s / %s\n",path_max,filename);
@@ -242,10 +244,61 @@ int display_property(char *path)
 {
 	DIR 		*dir;
 	struct dirent 	*into;
-	struct stat 	*buf;
-
-	if((dir = opendir(path)) == NULL)
+	struct stat 	buf[4096];
+	int i;
+	if ((dir = opendir(path)) == NULL)
 	      my_error("opendir",__LINE__);
+
+	while ((into = readdir(dir)) != NULL)
+	{
+		if (lstat(into->d_name,&buf[i]) == -1)
+		      my_error("lstat",__LINE__);
+	
+		show_mode(buf[i]);
+		i++
+	}
+	
 
 	return 0;
 }
+void show_mode(struct stat buf)
+{ 	
+	//权限第一项，是否为目录，字符设备，块设备，符号链接
+	if (S_ISDIR(buf))
+	      put('d');
+	else if (S_ISCHR(buf))
+	      put('c');
+	else if (S_ISBLK(buf))
+	      put('b');
+	else if (S_ISLNK(buf))
+	      put('l');
+	else  put('-');
+
+	//用户权限属性
+	if(buf & S_IRUSR) put('r');
+	else put('-');
+	if(buf & S_IWUSR) put('w');
+	else put('-');
+	if(buf & S_IXUSR) put('x');
+	else put('-');
+	
+	//组权限属性
+	if(buf & S_IRGRP) put('r');
+	else put('-');
+	if(buf & S_IWGRP) put('w');
+	else put('-');
+	if(buf & S_IXGRP) put('x');
+	else put('-');
+
+	//其他人权限属性
+	if(buf & S_IROTH) put('r');
+	else put('-');
+	if(buf & S_IWOTH) put('w');
+	else put('-');
+	if(buf & S_IXOTH) put('x');
+	else put('-');
+
+	put(' ');
+
+	
+} 
