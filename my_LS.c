@@ -38,13 +38,46 @@ int 	display_para(char *para,char *path);
 int 	display_all(char *path);
 void 	display_next(char *path);
 void 	show_t(char *filename);
+void 	display_property(char *path);
+void  	show_mode(struct stat buf,char *filename);
 
 int main(int argc, char *argv[])
 {
-	char 	path[80] = "/home/chang/cgxr";
+	char 	path[80] = {'\0'};
+	char 	pathchange[80];
+	char 	*pathmove;
 	char 	para[4] = "\0";
 	int  	count1;
 	
+	printf("input the path like this\n\t/home/chang or ./aaa\n");
+	scanf("%s",path);
+
+	//路径可以输入，绝对路径不用管，相对路径或错误路径的处理
+	if(strncmp(path,"./",2) == 0)
+	{    
+		//相对路径去掉./并加上文件执行的路径，使之成为绝对路径
+		for( pathmove = path; *(pathmove + 3) != '\0'; pathmove++)
+		      *pathmove = *(pathmove + 2);
+		*(pathmove + 1) = '\0';
+		strcpy(pathchange,path);
+		strncpy(path,"/home/chang/cgxr/",18);
+		strcat(path,pathchange);
+	}
+	else if((strncmp(path,"/home",6) != 0) && (strncmp(path,"./",3) != 0))
+	{ 
+		printf("error 无效的路径\n");
+		exit(0);
+	}
+	else
+	{
+		pathmove = path;
+		while(*(pathmove + 1) != '\0') 
+		      pathmove++;
+		if(*pathmove == '/')
+		      *pathmove = '\0';
+	}
+	printf("now path is %s\n",path);
+
 	//先把参数，路径存数组中，再分有参无参讨论
 	for ( count1 = 1; count1 < argc; count1++)
 	      if(argv[count1][0] == '-')
@@ -240,7 +273,7 @@ void show_t(char *filename)
 	printf("%s / %s\n",path_max,filename);
 }
 
-int display_property(char *path)
+void display_property(char *path)
 {
 	DIR 		*dir;
 	struct dirent 	*into;
@@ -254,51 +287,66 @@ int display_property(char *path)
 		if (lstat(into->d_name,&buf[i]) == -1)
 		      my_error("lstat",__LINE__);
 	
-		show_mode(buf[i]);
-		i++
+		show_mode(buf[i],into->d_name);
+		i++;
 	}
 	
-
-	return 0;
 }
-void show_mode(struct stat buf)
+
+
+void show_mode(struct stat buf,char *filename)
 { 	
+	struct group 	*gr;
+	struct passwd 	*pass;
+	char 		time[32];
 	//权限第一项，是否为目录，字符设备，块设备，符号链接
-	if (S_ISDIR(buf))
-	      put('d');
-	else if (S_ISCHR(buf))
-	      put('c');
-	else if (S_ISBLK(buf))
-	      put('b');
-	else if (S_ISLNK(buf))
-	      put('l');
-	else  put('-');
+	if (S_ISDIR(buf.st_mode))
+	      putchar('d');
+	else if (S_ISCHR(buf.st_mode))
+	      putchar('c');
+	else if (S_ISBLK(buf.st_mode))
+	      putchar('b');
+	else if (S_ISLNK(buf.st_mode))
+	      putchar('l');
+	else  putchar('-');
 
 	//用户权限属性
-	if(buf & S_IRUSR) put('r');
-	else put('-');
-	if(buf & S_IWUSR) put('w');
-	else put('-');
-	if(buf & S_IXUSR) put('x');
-	else put('-');
+	if(buf.st_mode & S_IRUSR) putchar('r');
+	else putchar('-');
+	if(buf.st_mode & S_IWUSR) putchar('w');
+	else putchar('-');
+	if(buf.st_mode & S_IXUSR) putchar('x');
+	else putchar('-');
 	
 	//组权限属性
-	if(buf & S_IRGRP) put('r');
-	else put('-');
-	if(buf & S_IWGRP) put('w');
-	else put('-');
-	if(buf & S_IXGRP) put('x');
-	else put('-');
+	if(buf.st_mode & S_IRGRP) putchar('r');
+	else putchar('-');
+	if(buf.st_mode & S_IWGRP) putchar('w');
+	else putchar('-');
+	if(buf.st_mode & S_IXGRP) putchar('x');
+	else putchar('-');
 
 	//其他人权限属性
-	if(buf & S_IROTH) put('r');
-	else put('-');
-	if(buf & S_IWOTH) put('w');
-	else put('-');
-	if(buf & S_IXOTH) put('x');
-	else put('-');
+	if(buf.st_mode & S_IROTH) putchar('r');
+	else putchar('-');
+	if(buf.st_mode & S_IWOTH) putchar('w');
+	else putchar('-');
+	if(buf.st_mode & S_IXOTH) putchar('x');
+	else putchar('-');
 
-	put(' ');
+	putchar(' ');
 
-	
+
+	pass = getpwuid(buf.st_uid);
+	gr  = getgrgid(buf.st_gid);
+	printf("%-4d",(int)buf.st_nlink);
+	printf("%-8s",pass->pw_name);
+	printf("%-8s",gr->gr_name);
+	printf("%-10d",(int)buf.st_size);
+	strcpy(time,ctime((time_t*)&buf.st_mtim));
+	time[strlen(time)-1] = '\0'; //由于函数在转化时自动加上了\n
+	printf("%-20s",time);
+	printf("   %s",filename);
+
+	putchar('\n');
 } 
