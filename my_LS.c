@@ -30,25 +30,32 @@
 #include <grp.h>
 #include <pwd.h>
 
-void 	my_error(const char *err_string,int line);
-int 	display(char *para,char *path);
-int 	display_present(char *path);
-void 	show(char filename[][256]);
-int 	display_para(char *para,char *path);
-int 	display_all(char *path);
-void 	display_next(char *path);
-void 	show_t(char *filename);
-void 	display_property(char *path);
-void  	show_mode(struct stat buf,char *filename);
+#include "my_LS.h"
 
+void change_path(char *path,char *change_name,int move)
+{
+	char 	*pathmove;
+	char 	pathchange[80];
+
+	for( pathmove = path; *(pathmove + move) != '\0'; pathmove++)
+		*pathmove = *(pathmove + move);	
+
+	*pathmove = '\0';	
+	strcpy(pathchange,path);
+	strcpy(path,change_name);
+	strcat(path,pathchange);
+	
+}
 int main(int argc, char *argv[])
 {
 	char 	path[80] = {'\0'};
-	char 	pathchange[80];
 	char 	*pathmove;
 	char 	para[4] = "\0";
 	int  	count1;
-	
+	char 	judge = 'a';
+	char 	now[80] = "/home/chang/cgxr/";
+	char 	father[80] = "/home/chang/";
+
 	printf("input the path like this\n\t/home/chang or ./aaa\n");
 	scanf("%s",path);
 
@@ -56,14 +63,12 @@ int main(int argc, char *argv[])
 	if(strncmp(path,"./",2) == 0)
 	{    
 		//相对路径去掉./并加上文件执行的路径，使之成为绝对路径
-		for( pathmove = path; *(pathmove + 3) != '\0'; pathmove++)
-		      *pathmove = *(pathmove + 2);
-		*(pathmove + 1) = '\0';
-		strcpy(pathchange,path);
-		strncpy(path,"/home/chang/cgxr/",18);
-		strcat(path,pathchange);
+		change_path(path,now,2);	
 	}
-	else if((strncmp(path,"/home",6) != 0) && (strncmp(path,"./",3) != 0))
+	else if((strncmp(path,"../",3)) == 0)
+	 //转化父目录
+	      change_path(path,father,3);
+	else if((strncmp(path,"/home",5) != 0) && (strncmp(path,"./",2) != 0))
 	{ 
 		printf("error 无效的路径\n");
 		exit(0);
@@ -85,7 +90,7 @@ int main(int argc, char *argv[])
 
 	//因为最多出现两个参数，所以有参无参以2为界
 	if (argc < 2)
-	      display_present(path);
+	      display_present(path,judge);
 	else	       
 	{ 
 		strcpy(para,argv[1]);
@@ -143,10 +148,10 @@ void show(char filename[][256])
 			i++;
 		}
 	}
-	
+	printf("\n");
 }
 
-int display_present(char *path)
+void display_present(char *path,char judge)
 {
 	DIR 		*dir;
 	struct dirent 	*perfile;
@@ -159,13 +164,21 @@ int display_present(char *path)
 		my_error("opendir",__LINE__);
 	
 	//复制目录文件名到二位字符数组中
-	for ( count1 = 0; (perfile = readdir(dir)) != NULL; count1++)
-		if (strncmp(perfile->d_name,".",1) != 0 && strncmp(perfile->d_name,"..",2) != 0)
-		{
-			strcpy(filename[count1],perfile->d_name);
+	for ( count1 = 0; (perfile = readdir(dir)) != NULL; count1++)	
+	{
+		if(judge == 'a')	      	      
+		{    
+			if (strncmp(perfile->d_name,".",1) != 0 && strncmp(perfile->d_name,"..",2) != 0)				
+			{			
+				strcpy(filename[count1],perfile->d_name);				    
+			}		    
+			else
+		      		count1--;		
 		}
 		else
-		      count1--;
+		      strcpy(filename[count1],perfile->d_name);		
+	}
+
 	//排序
 	for ( i = 0; i < count1 + 1; i++)
 	      for ( j = 0; j < count1 - 1 - i; j++)
@@ -179,52 +192,16 @@ int display_present(char *path)
 		}
 	
 	show(filename);
-	
-	printf("\n");
-	return 0;
-}
 
-int display_all(char *path)
-{
-	DIR 		*dir;
-	struct dirent 	*perfile;
-	char  		filename[4096][256]={"\0","\0"};
-	int 		count1,i,j;
-	char 		temp[256];
-
-	dir = opendir(path);
-	if (dir == NULL)
-		my_error("opendir",__LINE__);
-	
-	//复制目录文件名到二位字符数组中
-	for ( count1 = 0; (perfile = readdir(dir)) != NULL; count1++)
-		strcpy(filename[count1],perfile->d_name);
-	
-	//排序
-	for ( i = 0; i < count1 + 1; i++)
-	      for ( j = 0; j < count1 - 1 - i; j++)
-		{
-			if ((strcmp(filename[j],filename[j+1])) > 0 )
-			{
-				strcpy(temp,filename[j]);
-				strcpy(filename[j],filename[j+1]);
-				strcpy(filename[j+1],temp);
-			}
-		}
-	
-	show(filename);
-	
-	printf("\n");
-	return 0;
+	closedir(dir);
 }
 
 int display_para(char *para,char *path)
 {
-	
 	if (strncmp(para,"-t",2) == 0)
 	      display_next(path);
 	else if (strncmp(para,"-a",2) == 0)
-	      display_all(path);
+	      display_present(path,'-');
 	else if (strncmp(para,"-l",2) == 0)
 	      display_property(path);
 
@@ -279,6 +256,8 @@ void display_property(char *path)
 	struct dirent 	*into;
 	struct stat 	buf[4096];
 	int i;
+
+	chdir(path);
 	if ((dir = opendir(path)) == NULL)
 	      my_error("opendir",__LINE__);
 
@@ -287,63 +266,63 @@ void display_property(char *path)
 		if (lstat(into->d_name,&buf[i]) == -1)
 		      my_error("lstat",__LINE__);
 	
-		show_mode(buf[i],into->d_name);
+		show_mode(&buf[i],into->d_name);
 		i++;
 	}
-	
+
+	closedir(dir);
 }
 
 
-void show_mode(struct stat buf,char *filename)
+void show_mode(struct stat * buf,char *filename)
 { 	
 	struct group 	*gr;
 	struct passwd 	*pass;
 	char 		time[32];
 	//权限第一项，是否为目录，字符设备，块设备，符号链接
-	if (S_ISDIR(buf.st_mode))
+	if (S_ISDIR(buf->st_mode))
 	      putchar('d');
-	else if (S_ISCHR(buf.st_mode))
+	else if (S_ISCHR(buf->st_mode))
 	      putchar('c');
-	else if (S_ISBLK(buf.st_mode))
+	else if (S_ISBLK(buf->st_mode))
 	      putchar('b');
-	else if (S_ISLNK(buf.st_mode))
+	else if (S_ISLNK(buf->st_mode))
 	      putchar('l');
 	else  putchar('-');
 
 	//用户权限属性
-	if(buf.st_mode & S_IRUSR) putchar('r');
+	if(buf->st_mode & S_IRUSR) putchar('r');
 	else putchar('-');
-	if(buf.st_mode & S_IWUSR) putchar('w');
+	if(buf->st_mode & S_IWUSR) putchar('w');
 	else putchar('-');
-	if(buf.st_mode & S_IXUSR) putchar('x');
+	if(buf->st_mode & S_IXUSR) putchar('x');
 	else putchar('-');
 	
 	//组权限属性
-	if(buf.st_mode & S_IRGRP) putchar('r');
+	if(buf->st_mode & S_IRGRP) putchar('r');
 	else putchar('-');
-	if(buf.st_mode & S_IWGRP) putchar('w');
+	if(buf->st_mode & S_IWGRP) putchar('w');
 	else putchar('-');
-	if(buf.st_mode & S_IXGRP) putchar('x');
+	if(buf->st_mode & S_IXGRP) putchar('x');
 	else putchar('-');
 
 	//其他人权限属性
-	if(buf.st_mode & S_IROTH) putchar('r');
+	if(buf->st_mode & S_IROTH) putchar('r');
 	else putchar('-');
-	if(buf.st_mode & S_IWOTH) putchar('w');
+	if(buf->st_mode & S_IWOTH) putchar('w');
 	else putchar('-');
-	if(buf.st_mode & S_IXOTH) putchar('x');
+	if(buf->st_mode & S_IXOTH) putchar('x');
 	else putchar('-');
 
 	putchar(' ');
 
-
-	pass = getpwuid(buf.st_uid);
-	gr  = getgrgid(buf.st_gid);
-	printf("%-4d",(int)buf.st_nlink);
+	pass = getpwuid(buf->st_uid);
+	gr  = getgrgid(buf->st_gid);
+	printf("%-4d",(int)buf->st_nlink);
 	printf("%-8s",pass->pw_name);
 	printf("%-8s",gr->gr_name);
-	printf("%-10d",(int)buf.st_size);
-	strcpy(time,ctime((time_t*)&buf.st_mtim));
+	printf("%-10d",(int)buf->st_size);
+	strcpy(time,ctime((time_t*)&buf->st_mtim));
 	time[strlen(time)-1] = '\0'; //由于函数在转化时自动加上了\n
 	printf("%-20s",time);
 	printf("   %s",filename);
